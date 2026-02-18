@@ -1,9 +1,13 @@
+import os
 import streamlit as st
 import pandas as pd
 import numpy as np
 import plotly.express as px
 import plotly.graph_objects as go
 from scipy.integrate import solve_ivp
+
+# Resolve CSV path relative to this script (works locally & on Streamlit Cloud)
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 # ── Page config ──────────────────────────────────────────────────────────────
 st.set_page_config(
@@ -16,23 +20,112 @@ st.set_page_config(
 # ── Custom CSS ────────────────────────────────────────────────────────────────
 st.markdown("""
 <style>
-    .main {background-color: #0d0d1a;}
-    h1, h2, h3 {color: #e0e0ff;}
-    .metric-card {
-        background: linear-gradient(135deg, #1a1a3e 0%, #0d0d2b 100%);
-        border: 1px solid #3a3a6e;
-        border-radius: 12px;
-        padding: 18px;
-        text-align: center;
+    /* ── Base background ── */
+    html, body, [data-testid="stAppViewContainer"], [data-testid="stApp"] {
+        background-color: #0a0010 !important;
     }
-    .stSelectbox label, .stMultiSelect label, .stSlider label {color: #a0a0d0 !important;}
+    [data-testid="stHeader"] {
+        background-color: #0a0010 !important;
+    }
+    [data-testid="stSidebar"] {
+        background: linear-gradient(180deg, #0d0020 0%, #0a0010 100%) !important;
+        border-right: 1px solid #1a00ff44;
+    }
+    section[data-testid="stSidebarContent"] {
+        background: transparent !important;
+    }
+
+    /* ── Neon blue text everywhere ── */
+    html, body, p, span, div, label, li, td, th,
+    [data-testid="stMarkdownContainer"] p,
+    [data-testid="stMarkdownContainer"] li {
+        color: #00cfff !important;
+    }
+
+    h1, h2, h3, h4, h5, h6,
+    [data-testid="stMarkdownContainer"] h1,
+    [data-testid="stMarkdownContainer"] h2,
+    [data-testid="stMarkdownContainer"] h3 {
+        color: #00eeff !important;
+        text-shadow: 0 0 12px #00eeffaa, 0 0 24px #00cfff55;
+    }
+
+    /* ── Tabs ── */
+    [data-testid="stTabs"] button {
+        color: #00cfff !important;
+        background: transparent !important;
+        border-bottom: 2px solid transparent !important;
+    }
+    [data-testid="stTabs"] button[aria-selected="true"] {
+        color: #00eeff !important;
+        border-bottom: 2px solid #00eeff !important;
+        text-shadow: 0 0 8px #00eeff;
+    }
+
+    /* ── Metrics ── */
+    [data-testid="stMetricLabel"] { color: #00cfff !important; }
+    [data-testid="stMetricValue"] {
+        color: #00eeff !important;
+        text-shadow: 0 0 10px #00eeffaa;
+    }
+    [data-testid="metric-container"] {
+        background: linear-gradient(135deg, #0d0030 0%, #0a0018 100%);
+        border: 1px solid #00cfff44;
+        border-radius: 12px;
+        padding: 12px;
+        box-shadow: 0 0 12px #00cfff22;
+    }
+
+    /* ── Sliders, selectboxes, widgets ── */
+    .stSelectbox label, .stMultiSelect label, .stSlider label,
+    .stSlider [data-testid="stWidgetLabel"],
+    .stSelectbox [data-testid="stWidgetLabel"],
+    .stMultiSelect [data-testid="stWidgetLabel"] {
+        color: #00cfff !important;
+    }
+    [data-baseweb="select"] div, [data-baseweb="tag"] {
+        background-color: #0d0030 !important;
+        color: #00cfff !important;
+        border-color: #00cfff55 !important;
+    }
+
+    /* ── Buttons ── */
+    .stButton > button, .stDownloadButton > button {
+        background: linear-gradient(135deg, #0d0030, #1a0050) !important;
+        color: #00eeff !important;
+        border: 1px solid #00cfff88 !important;
+        border-radius: 8px !important;
+        box-shadow: 0 0 10px #00cfff44 !important;
+    }
+    .stButton > button:hover, .stDownloadButton > button:hover {
+        box-shadow: 0 0 18px #00eeffaa !important;
+        border-color: #00eeff !important;
+    }
+
+    /* ── Dataframe ── */
+    [data-testid="stDataFrame"] {
+        border: 1px solid #00cfff33 !important;
+    }
+
+    /* ── Info/caption boxes ── */
+    [data-testid="stInfoBox"], .stAlert {
+        background-color: #0d0030 !important;
+        border-left: 4px solid #00cfff !important;
+        color: #00cfff !important;
+    }
+    .stCaption, [data-testid="stCaptionContainer"] {
+        color: #00cfff88 !important;
+    }
+
+    /* ── Horizontal rule ── */
+    hr { border-color: #00cfff33 !important; }
 </style>
 """, unsafe_allow_html=True)
 
 # ── Load & Clean Data ─────────────────────────────────────────────────────────
 @st.cache_data
 def load_data():
-    df = pd.read_csv("space_missions_dataset.csv")
+    df = pd.read_csv(os.path.join(BASE_DIR, "space_missions_dataset.csv"))
 
     # Rename columns for readability
     df.columns = [c.strip() for c in df.columns]
