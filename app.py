@@ -16,11 +16,12 @@ st.title("🚀 Rocket Launch Path Visualization Dashboard")
 def load_data():
     df = pd.read_csv("rocket_data.csv")
 
-    # Convert Launch Date if exists
-    if "Launch Date" in df.columns:
-        df["Launch Date"] = pd.to_datetime(df["Launch Date"], errors="coerce")
+    # Clean column names
+    df.columns = df.columns.str.strip()
 
-    # Basic cleaning
+    # Convert Launch Date
+    df["Launch Date"] = pd.to_datetime(df["Launch Date"], errors="coerce")
+
     df = df.drop_duplicates()
     df = df.dropna()
 
@@ -28,8 +29,8 @@ def load_data():
 
 try:
     df = load_data()
-except:
-    st.error("Make sure rocket_data.csv is uploaded to the repository.")
+except Exception as e:
+    st.error("Dataset not loading. Check file name.")
     st.stop()
 
 st.sidebar.header("Navigation")
@@ -47,56 +48,64 @@ if section == "Dataset Analysis":
 
     col1, col2 = st.columns(2)
 
-    # Scatter Plot: Payload vs Fuel
+    # 1️⃣ Scatter Plot
     with col1:
         st.subheader("Payload Weight vs Fuel Consumption")
         fig1 = plt.figure()
         sns.scatterplot(
             data=df,
-            x="Payload Weight",
-            y="Fuel Consumption",
-            hue="Mission Success"
+            x="Payload Weight (tons)",
+            y="Fuel Consumption (tons)",
+            hue="Mission Success (%)"
         )
-        plt.xlabel("Payload Weight")
-        plt.ylabel("Fuel Consumption")
+        plt.xlabel("Payload Weight (tons)")
+        plt.ylabel("Fuel Consumption (tons)")
         st.pyplot(fig1)
 
-    # Bar Chart: Cost Success vs Failure
+    # 2️⃣ Bar Chart
     with col2:
-        st.subheader("Mission Cost: Success vs Failure")
-        cost_summary = df.groupby("Mission Success")["Mission Cost"].mean()
+        st.subheader("Mission Cost: Success Comparison")
+
+        df["Success Category"] = df["Mission Success (%)"].apply(
+            lambda x: "High Success" if x >= 50 else "Low Success"
+        )
+
+        cost_summary = df.groupby("Success Category")[
+            "Mission Cost (billion USD)"
+        ].mean()
 
         fig2 = plt.figure()
         cost_summary.plot(kind="bar")
-        plt.ylabel("Average Mission Cost")
+        plt.ylabel("Average Mission Cost (billion USD)")
         st.pyplot(fig2)
 
     col3, col4 = st.columns(2)
 
-    # Line Chart: Duration vs Distance
+    # 3️⃣ Line Chart
     with col3:
         st.subheader("Mission Duration vs Distance from Earth")
         fig3 = plt.figure()
         sns.lineplot(
             data=df,
-            x="Distance from Earth",
-            y="Mission Duration"
+            x="Distance from Earth (light-years)",
+            y="Mission Duration (years)"
         )
         st.pyplot(fig3)
 
-    # Box Plot: Crew Size vs Success
+    # 4️⃣ Box Plot
     with col4:
-        st.subheader("Crew Size vs Mission Success")
+        st.subheader("Crew Size vs Mission Success (%)")
         fig4 = plt.figure()
         sns.boxplot(
             data=df,
-            x="Mission Success",
+            x="Mission Success (%)",
             y="Crew Size"
         )
         st.pyplot(fig4)
 
-    # Correlation Heatmap
+    # 5️⃣ Correlation Heatmap
     st.subheader("Correlation Heatmap")
+
     numeric_df = df.select_dtypes(include=np.number)
     corr = numeric_df.corr()
 
@@ -143,7 +152,6 @@ if section == "Rocket Simulation":
         altitudes.append(altitude)
         velocities.append(velocity)
 
-    # Altitude Plot
     fig_alt = go.Figure()
     fig_alt.add_trace(go.Scatter(
         x=list(range(200)),
@@ -160,7 +168,6 @@ if section == "Rocket Simulation":
 
     st.plotly_chart(fig_alt)
 
-    # Velocity Plot
     fig_vel = go.Figure()
     fig_vel.add_trace(go.Scatter(
         x=list(range(200)),
@@ -176,3 +183,4 @@ if section == "Rocket Simulation":
     )
 
     st.plotly_chart(fig_vel)
+
